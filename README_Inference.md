@@ -1,7 +1,7 @@
 
-# YOLOv5 Inference for Palm Oil Tree Detection
+# Experimental YOLOv5 Inference for Palm Oil Tree Detection
 
-This document explains how to use the trained YOLOv5 model to detect and count palm oil trees in drone images. It includes steps for running inference and customizing parameters for high-altitude or close-up images.
+This document preserves the prototype inference workflow developed for detecting and counting palm oil trees in aerial images. It is an experimental record rather than a validated production implementation. The threshold settings, bounding-box coordinate handling, and counting accuracy require further verification before operational use. Despite the original function name, the current forward call does not establish that Test-Time Augmentation (TTA) was activated.
 
 ## Table of Contents
 
@@ -9,18 +9,19 @@ This document explains how to use the trained YOLOv5 model to detect and count p
 -   [Detection Script](#detection-script)
 -   [Usage Instructions](#usage-instructions)
 -   [Examples](#examples)
-    -   [High-Altitude Detection](#high-altitude-detection)
-    -   [Close-Up Detection](#close-up-detection)
+    -   [Experimental Settings for Small Objects](#experimental-settings-for-small-objects)
+    -   [Experimental Settings for Larger Objects](#experimental-settings-for-larger-objects)
 -   [Key Parameters](#key-parameters)
+-   [Current Limitations](#current-limitations)
 -   [Acknowledgments](#acknowledgments)
 
 ## Overview
 
-The inference script:
+The prototype inference script:
 
 1.  Loads the trained YOLOv5 model.
 2.  Reads an input image (`image_path`).
-3.  Applies **Test-Time Augmentation (TTA)** to enhance detection accuracy.
+3.  Contains an attempted **Test-Time Augmentation (TTA)** setting that is not passed to the model's forward call.
 4.  Displays the annotated image in the Jupyter Notebook with bounding boxes for each detected palm oil tree.
 5.  Prints the total count of detected trees to the console.
 
@@ -49,7 +50,7 @@ def detect_with_tta(
     device='cpu'
 ):
     """
-    Runs YOLOv5 inference with Test-Time Augmentation (TTA).
+    Runs the original experimental YOLOv5 inference workflow.
     
     Args:
     - image_path (str): Path to input image.
@@ -68,7 +69,7 @@ def detect_with_tta(
     # Load the model
     model = DetectMultiBackend(model_path, device=device)
     stride, names, pt = model.stride, model.names, model.pt
-    model.augment = True  # Enable TTA
+    model.augment = True  # This assignment alone does not establish that TTA is used
     
     # Load and preprocess the image
     img_bgr = cv2.imread(image_path)
@@ -118,9 +119,9 @@ def detect_with_tta(
      -   Execute the script in a Jupyter Notebook or Python environment.
 
 ## Examples
-### High-Altitude Detection
+### Experimental Settings for Small Objects
 
-For drone images taken from a high altitude (small objects):
+The following settings were explored for images containing small objects. They were selected heuristically and were not calibrated against a labeled holdout set:
 ```python
 image_path = "G:/Palm_Trees_dataset/images/val/ai_assignment_20241202_count.jpeg"
 model_path = "runs/train/exp4/weights/best.pt"
@@ -137,8 +138,8 @@ annotated_img, detections_count = detect_with_tta(
 print(f"Detected {detections_count} palm oil trees.")
 ```
 
-### Close-Up Detection
-For images where trees appear larger:
+### Experimental Settings for Larger Objects
+The following alternative settings were explored for images where trees appear larger:
 ```python
 image_path = "G:/Palm_Trees_dataset/images/val/test.jpg"
 model_path = "runs/train/exp4/weights/best.pt"
@@ -159,19 +160,27 @@ print(f"Detected {detections_count} palm oil trees.")
 
 1.  **`conf_threshold`**:
     
-    -   Lower for detecting small objects at high altitudes (e.g., `0.001`).
-    -   Higher for close-up images to reduce false positives (e.g., `0.1`).
+    -   A very low value such as `0.001` retains many candidate detections and can substantially increase false positives.
+    -   A higher value such as `0.1` filters more low-confidence detections.
 2.  **`img_size`**:
     
-    -   Use a larger size (e.g., `1920`) for small objects in high-altitude images.
-    -   Use a smaller size (e.g., `1024`) for close-up images.
+    -   Larger image sizes were explored for small-object detection, but their effect was not measured in a controlled comparison.
+    -   Image size also changes processing time and memory requirements.
 3.   **`iou_threshold`**:
     
 	    -   Controls the strictness of Non-Maximum Suppression (default: `0.45`).
+
+## Current Limitations
+
+- The repository does not contain a controlled comparison of inference with and without TTA.
+- The current `model(img_tensor)` call does not pass `augment=True`, so the saved notebook does not establish that TTA was executed.
+- The prototype's bounding-box coordinates should be checked against the original image after letterbox resizing.
+- Confidence and image-size settings are heuristic rather than calibrated.
+- Counting performance has not been compared with manually verified counts; the 300-detection example also reaches YOLOv5's default detection ceiling.
+- The example has not been reconstructed and tested from a clean environment.
 
 ## Acknowledgments
 
 -   **Dataset**: [RoboFlow Oil Palm Detection Dataset](https://universe.roboflow.com/manfred-michael/oil-palm-detection/dataset/6).
 -   **YOLOv5**: The Ultralytics team for their exceptional object detection framework.
 -   **ChatGPT**: Assisted in refining and documenting the inference pipeline.
-
