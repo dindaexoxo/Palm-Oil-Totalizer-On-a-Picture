@@ -1,149 +1,115 @@
-# I couldn't upload this file through GitHub, so I shared this file through Google Drive.
-**https://drive.google.com/file/d/17sTeQFwqQBKdBTkpao7Du49WFuImjL2Q/view?usp=sharing**
+# Palm Oil Tree Detection and Counting with YOLOv5
 
-# Palm Oil Tree Detection & Counting
+This portfolio project explores one-class oil palm tree detection in aerial imagery using a pretrained YOLOv5 model. The repository documents the workflow used to convert annotations, train and validate the detector, and experiment with counting trees from retained bounding-box detections.
 
-This project focuses on detecting and counting palm oil trees in drone images using the YOLOv5 object detection model. The dataset used is sourced from [RoboFlow Oil Palm Detection Dataset](https://universe.roboflow.com/manfred-michael/oil-palm-detection/dataset/6), and the annotations were converted to YOLO format for training.
+## Project Scope
 
-## Table of Contents
+The project demonstrates:
 
--   [Overview](#overview)
--   [Dataset Structure](#dataset-structure)
--   [Pipeline](#pipeline)
-    -   [1. Dataset Conversion](#1-dataset-conversion)
-    -   [2. Training](#2-training)
-    -   [3. Inference](#3-inference)
--   [Dependencies](#dependencies)
--   [Acknowledgments](#acknowledgments)
--   [License](#license)
+- conversion of COCO bounding-box annotations into YOLO format;
+- fine-tuning of a pretrained YOLOv5n detector;
+- evaluation with object-detection metrics on a validation split; and
+- experimental image inference in which the number of retained detections is used as the estimated tree count.
 
-## Overview
+This is a learning and portfolio project. It has not been validated as a production system or as an operational forestry inventory tool.
 
-The goal of this project is to:
+## Full Inference Notebook
 
-1.  Detect palm oil trees in drone images.
-2.  Count the number of trees in each image.
-3.  Provide bounding boxes around each detected tree.
+The complete notebook with embedded inference and counting outputs is available here:
 
-This project uses:
+**[Open `Palm-oil-tree-totalizer-on-a-picture.ipynb` on Google Drive](https://drive.google.com/file/d/17sTeQFwqQBKdBTkpao7Du49WFuImjL2Q/view?usp=sharing)**
 
--   **YOLOv5** for object detection.
--   **Test-Time Augmentation (TTA)** to improve detection accuracy, especially for small or distant objects.
+The notebook is hosted externally because its embedded outputs make the file approximately 105 MB. Its experimental results should be interpreted together with the limitations documented below.
 
-## Dataset Structure
+## Dataset
 
-The dataset follows this directory structure after downloading and preparation:
-```bash
-Palm_Trees_dataset/
-├── annotations/
-│   ├── instances_train.json
-│   ├── instances_val.json
-│   └── instances_test.json
-├── train/
-│   ├── img1.jpg
-│   ├── img2.jpg
-│   └── ...
-├── val/
-│   ├── imgX.jpg
-│   ├── imgY.jpg
-│   └── ...
-└── test/
-    ├── imgA.jpg
-    ├── imgB.jpg
-    └── ...
+The project uses version 6 of the [Oil Palm Detection dataset on Roboflow Universe](https://universe.roboflow.com/manfred-michael/oil-palm-detection/dataset/6). It contains aerial images with bounding-box annotations for a single oil palm class.
+
+The source dataset provides separate training, validation, and test directories. The workflow in this repository converts the available COCO annotations into YOLO text labels.
+
+## Repository Contents
+
+| File | Description |
+| --- | --- |
+| `coco_to_yolo.py` | Converts COCO bounding boxes into normalized YOLO labels. |
+| `Train-Code-YOLOv5.ipynb` | Records the original model configuration, training, and validation workflow. |
+| `best.pt` | Saved model weights from the training experiment. |
+| `model performance.JPG` | Screenshot of the recorded YOLOv5 validation output. |
+| `README_Training.md` | Additional notes about the original training workflow. |
+| `README_Inference.md` | Notes and prototype code for experimental inference and counting. |
+| [Full inference and counting notebook](https://drive.google.com/file/d/17sTeQFwqQBKdBTkpao7Du49WFuImjL2Q/view?usp=sharing) | Original `Palm-oil-tree-totalizer-on-a-picture.ipynb` notebook hosted on Google Drive because the file is approximately 105 MB. |
+
+## Workflow
+
+### 1. Annotation Conversion
+
+The `coco_to_yolo.py` script converts each COCO bounding box from `[x_min, y_min, width, height]` into normalized YOLO coordinates:
+
+```text
+class_id x_center y_center width height
 ```
--   **annotations/**: Contains COCO JSON files for training, validation, and testing sets.
--   **train/**: Contains the training images.
--   **val/**: Contains the validation images.
--   **test/**: Contains the test images (if applicable).
 
-## Pipeline
-### 1. Dataset Conversion
+The paths in the original script reflect the local environment used for the experiment and must be changed before reuse.
 
-To convert the COCO annotations into YOLO format:
+### 2. Model Training
 
-1.  Download the dataset in COCO JSON format.
-2.  Organize the dataset as shown above.
-3.  Use the `coco_to_yolo.py` script to convert COCO annotations to YOLO format:
-	```bash
-	python coco_to_yolo.py
-	```
-4. After running, the YOLO-format labels will be saved in `labels/train`, `labels/val`, and `labels/test`.
+The recorded notebook uses the following configuration:
 
-### 2. Training
+| Parameter | Recorded value |
+| --- | --- |
+| Base model | YOLOv5n pretrained weights |
+| Input size | 640 x 640 pixels |
+| Batch size | 4 |
+| Epochs | 10 |
+| Device | CPU |
+| Classes | 1 (`palm-oil`) |
 
-The YOLOv5 model is trained using the converted dataset. Key parameters include:
+These settings document the completed experiment; they are not presented as an optimized configuration.
 
--   **Input image size**: `640 x 640`.
--   **Batch size**: `4` (adjust for memory limitations).
--   **Number of epochs**: `10`.
+### 3. Recorded Validation Results
 
-The training process saves the best model weights in the `runs/train/exp` directory.
+The saved validation output reports results on the dataset's validation split of **813 images** containing **1,951 annotated instances**:
 
-For detailed training instructions, refer to [README_Training.md](README_Training.md).
+| Metric | Recorded value |
+| --- | ---: |
+| Precision | 0.843 |
+| Recall | 0.890 |
+| mAP@0.5 | 0.876 |
+| mAP@0.5:0.95 | 0.519 |
 
-### 3. Inference
+![Recorded YOLOv5 validation output](model%20performance.JPG)
 
-The `detect_with_tta` script is used for inference:
+These are object-detection metrics, not a general "detection accuracy" score. The repository does not currently contain a separately recorded evaluation on an independent test set.
 
--   Takes an input image.
--   Detects and counts palm oil trees.
--   Displays the annotated image in Jupyter Notebook with bounding boxes.
+### 4. Experimental Counting
 
-For detailed inference instructions, refer to [README_Inference.md](README_Inference.md).
+The prototype inference workflow estimates a tree count by counting bounding boxes retained after confidence filtering and non-maximum suppression. This demonstrates the mechanics of detection-based counting, but counting quality has not been evaluated against manually verified image-level counts using metrics such as mean absolute error.
 
-## Dependencies
+`README_Inference.md` contains the experimental inference notes. The [full inference and counting notebook](https://drive.google.com/file/d/17sTeQFwqQBKdBTkpao7Du49WFuImjL2Q/view?usp=sharing) is hosted externally because its embedded outputs make the file approximately 105 MB.
 
-Ensure the following dependencies are installed:
+The notebook records examples returning 300 and 8 detections. The 300-detection result reaches YOLOv5's default `max_det=300` limit and therefore cannot be interpreted as the complete number of trees in the image. Neither example is compared with a manually verified ground-truth count.
 
--   Python 3.8+
--   PyTorch
--   YOLOv5 (clone the repository or install via `pip install ultralytics`)
--   OpenCV
--   Matplotlib
--   tqdm
+Although the inference function is named `detect_with_tta` and assigns `model.augment = True`, its forward call does not pass `augment=True`. In the YOLOv5 `DetectMultiBackend` interface, the forward argument defaults to `False`; consequently, the current notebook does not establish that TTA was executed.
 
-Install the required Python libraries:
-```bash
-pip install -r requirements.txt
-```
+## Limitations
+
+- The recorded metrics come from the validation split rather than a separately documented final test evaluation.
+- Generalization to imagery from different plantations, cameras, resolutions, seasons, or flight conditions has not been measured.
+- The current inference call does not provide evidence that Test-Time Augmentation was activated.
+- Confidence thresholds were explored heuristically and were not calibrated on an independent dataset.
+- Detection-based counts may include false positives, missed trees, or duplicate detections; one example also reaches the default 300-detection ceiling, and counting error has not been quantified.
+- The original environment has not yet been reconstructed from a clean installation, so dependency compatibility may require adjustment.
+
+## Documentation Revision
+
+Earlier project descriptions used the phrase "90%+ detection accuracy" and attributed an approximately 15% improvement to Test-Time Augmentation. Those statements were removed in August 2026 because the saved evidence supports the validation metrics reported above, while the reviewed inference call does not establish that TTA was activated or that counting accuracy was measured. This revision corrects the documentation; it does not represent a new model-training run.
 
 ## Acknowledgments
 
--   **Dataset**: [RoboFlow Oil Palm Detection Dataset](https://universe.roboflow.com/manfred-michael/oil-palm-detection/dataset/6).
--   **YOLOv5**: The Ultralytics team for their exceptional object detection framework.
--   **ChatGPT**: Assisted with code structuring, debugging, and documentation.
-
-## Acknowledgments
-
--   **Ultralytics/YOLOv5**: Core detection framework.
--   **ChatGPT**: Assisted in generating code snippets and documentation structure.
--   **Community**: Many online resources and blog posts that guide object detection tasks.
+- [Oil Palm Detection dataset](https://universe.roboflow.com/manfred-michael/oil-palm-detection/dataset/6) published on Roboflow Universe.
+- [Ultralytics YOLOv5](https://github.com/ultralytics/yolov5) for the object-detection framework and pretrained weights.
+- ChatGPT was used to assist with code structuring, debugging, and documentation. The author executed the project and is responsible for the repository's final content and stated limitations.
 
 ## License
 
-This project is open-sourced under the MIT License. Portions of this repository’s content, including code snippets and explanations, were generated using **ChatGPT** by OpenAI.
-
-```sql
-MIT License
-
-Copyright (c) 2025 
-
-Permission is hereby granted, free of charge, to any person obtaining a copy   
-of this software and associated documentation files (the "Software"), to deal  
-in the Software without restriction, including without limitation the rights   
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      
-copies of the Software, and to permit persons to whom the Software is          
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in     
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING        
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER           
-DEALINGS IN THE SOFTWARE.
-```
+This repository is released under the [MIT License](LICENSE).
