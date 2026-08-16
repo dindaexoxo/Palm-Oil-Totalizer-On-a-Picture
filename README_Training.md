@@ -1,13 +1,13 @@
 # YOLOv5 Training for Palm Oil Tree Detection
 
-This document provides detailed instructions on how to prepare the dataset, convert it to YOLO format, and train a YOLOv5 model for detecting palm oil trees.
+This document records the original workflow used to prepare the dataset, convert annotations, and train a YOLOv5 model for detecting palm oil trees. Local paths and dependency versions may require adjustment before the workflow can be reproduced in a new environment.
 
 ## Table of Contents
 
 -   [Dataset Preparation](#dataset-preparation)
 -   [Dataset Conversion (COCO to YOLO)](#dataset-conversion-coco-to-yolo)
 -   [Training the Model](#training-the-model)
--   [Validation](#validation)
+-   [Validation Notes](#validation-notes)
 -   [Key Notes](#key-notes)
 
 ## Dataset Preparation
@@ -20,12 +20,12 @@ This document provides detailed instructions on how to prepare the dataset, conv
 	    -   After downloading the dataset in COCO JSON format, organize it as follows:
 		    ``` kotlin
 			Palm_Trees_dataset/
-			├── annotations/
-			│   ├── instances_train.json
-			│   ├── instances_val.json
-			├── images/
-			│   ├── train/
-			│   ├── val/
+			â”œâ”€â”€ annotations/
+			â”‚   â”œâ”€â”€ instances_train.json
+			â”‚   â”œâ”€â”€ instances_val.json
+			â”œâ”€â”€ images/
+			â”‚   â”œâ”€â”€ train/
+			â”‚   â”œâ”€â”€ val/
 		    ```
 
 ## Dataset Conversion (COCO to YOLO)
@@ -80,13 +80,13 @@ for dataset in datasets:
 3. After running, the dataset structure will include YOLO annotations
 	``` kotlin
 	Palm_Trees_dataset/
-	├── annotations/
-	├── images/
-	│   ├── train/
-	│   ├── val/
-	├── labels/
-	│   ├── train/
-	│   ├── val/
+	â”œâ”€â”€ annotations/
+	â”œâ”€â”€ images/
+	â”‚   â”œâ”€â”€ train/
+	â”‚   â”œâ”€â”€ val/
+	â”œâ”€â”€ labels/
+	â”‚   â”œâ”€â”€ train/
+	â”‚   â”œâ”€â”€ val/
 	```
 ## Training the Model
 
@@ -114,14 +114,16 @@ args = {
 # Run training
 train.run(**args)
 ```
-### Steps to Train
+### Validation Notes
 
-1. Update the `weights` path to point to your trained model (`best.pt`).
+1. Update the validation command so that `weights` points to the trained model (`best.pt`).
 2. Execute the validation script:
 	```bash
 	python val.py
 	```
-3. Validation results (precision, recall, mAP, etc.) will be displayed in the console and saved under the `runs/val` directory.
+3. Validation results (precision, recall, and mAP) will be displayed in the console and saved under the `runs/val` directory.
+
+The recorded results in this repository come from the validation split. A separately documented final test-set evaluation is not currently included, and the configuration should not be interpreted as systematically optimized.
 
 ## Key Notes
 
